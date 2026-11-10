@@ -7,16 +7,6 @@
 
 import SwiftUI
 
-// MARK: - Model
-
-enum LearningDuration: String, CaseIterable, Identifiable {
-    case week = "Week"
-    case month = "Month"
-    case year = "Year"
-
-    var id: String { rawValue }
-}
-
 // MARK: - View (iOS 26+, Liquid Glass)
 
 struct OnboardingView: View {
@@ -24,9 +14,6 @@ struct OnboardingView: View {
     @State private var duration: LearningDuration = .week
     @FocusState private var isFocused: Bool
 
-    private let accent = Color(red: 0.96, green: 0.55, blue: 0.13) // #F58C21
-
-    // Mixed-weight title built with AttributedString (replaces deprecated Text + Text)
     private var greeting: AttributedString {
         var hello = AttributedString("Hello ")
         hello.font = .system(size: 34, weight: .light)
@@ -50,7 +37,7 @@ struct OnboardingView: View {
                         .font(.system(size: 40))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [Color(red: 1.0, green: 0.68, blue: 0.25), accent],
+                                colors: [Color(red: 1.0, green: 0.68, blue: 0.25), Color("Orange")],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
@@ -82,7 +69,7 @@ struct OnboardingView: View {
                 )
                 .font(.system(size: 17))
                 .foregroundStyle(.white)
-                .tint(accent)
+                .tint(Color("Orange"))
                 .focused($isFocused)
                 .padding(.top, 18)
 
@@ -99,10 +86,10 @@ struct OnboardingView: View {
                 GlassEffectContainer(spacing: 12) {
                     HStack(spacing: 12) {
                         ForEach(LearningDuration.allCases) { item in
-                            DurationChip(
+                                DurationChip(
                                 title: item.rawValue,
                                 isSelected: duration == item,
-                                accent: accent
+                                accent: Color("Orange")
                             ) {
                                 withAnimation(.spring(duration: 0.35, bounce: 0.25)) {
                                     duration = item
@@ -127,7 +114,7 @@ struct OnboardingView: View {
                             .padding(.vertical, 6)
                     }
                     .buttonStyle(.glassProminent)
-                    .tint(accent)
+                    .tint(Color("Orange"))
 
                     Text("You can edit your desire later")
                         .font(.system(size: 12))
@@ -140,33 +127,6 @@ struct OnboardingView: View {
         }
         .preferredColorScheme(.dark)
         .onTapGesture { isFocused = false }
-    }
-}
-
-// MARK: - Chip
-
-private struct DurationChip: View {
-    let title: String
-    let isSelected: Bool
-    let accent: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(isSelected ? .white : Color.white.opacity(0.35))
-                .frame(minWidth: 56)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 11)
-        }
-        .buttonStyle(.plain)
-        .glassEffect(
-            isSelected
-                ? .regular.tint(accent).interactive()
-                : .regular.tint(Color.white.opacity(0.04)).interactive(),
-            in: .capsule
-        )
     }
 }
 
