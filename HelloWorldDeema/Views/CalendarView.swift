@@ -1,18 +1,18 @@
 //
-//  Calendar.swift
-//  MyApp
+//  CalendarView.swift
+//  HelloWorldDeema
 //
-//  Created by deema bakhyer on 09/11/2026.
+//  Created by deema bakhyer on 11/11/2026.
 //
 
 import SwiftUI
 
-struct Calendar: View {
+struct CalendarView: View {
     var body: some View {
         Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
     }
 }
 
 #Preview {
-    Calendar()
+    CalendarView()
 }

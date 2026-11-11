@@ -35,12 +35,7 @@ struct OnboardingView: View {
                     Spacer()
                     Image(systemName: "flame.fill")
                         .font(.system(size: 40))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Color(red: 1.0, green: 0.68, blue: 0.25), Color("Orange")],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
+                        .foregroundStyle(Color("Orange")
                         )
                     Spacer()
                 }
@@ -129,7 +124,6 @@ struct OnboardingView: View {
         .onTapGesture { isFocused = false }
     }
 }
-
 // MARK: - Preview
 
 #Preview {
