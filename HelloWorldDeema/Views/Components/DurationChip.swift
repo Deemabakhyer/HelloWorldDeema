@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-// MARK: - Chip
-
 public struct DurationChip: View {
     let title: String
     let isSelected: Bool

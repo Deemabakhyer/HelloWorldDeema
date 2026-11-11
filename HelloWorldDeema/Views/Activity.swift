@@ -9,11 +9,11 @@ import SwiftUI
 
 // MARK: - Screen (iOS 26+, Liquid Glass)
 
-struct HomeView: View {
-    @State private var viewModel: HomeViewModel
+struct ActivityView: View {
+    @State private var viewModel: ActivityViewModel
     @Environment(\.scenePhase) private var scenePhase
 
-    init(viewModel: HomeViewModel = HomeViewModel()) {
+    init(viewModel: ActivityViewModel = ActivityViewModel()) {
         _viewModel = State(initialValue: viewModel)
     }
 
@@ -247,44 +247,6 @@ private struct StatCard: View {
     }
 }
 
-// MARK: - Preview data (matches the 4 states in the design)
-//
-//private extension HomeViewModel {
-//    static func mock(past: [Int: DayStatus], today todayStatus: DayStatus?) -> HomeViewModel {
-//        let cal = Calendar(identifier: .gregorian)
-//        let date = cal.date(from: DateComponents(year: 2024, month: 10, day: 24))!   // Thursday 24 October
-//
-//        var seed: [Date: DayStatus] = [:]
-//        for (offset, status) in past {
-//            seed[cal.date(byAdding: .day, value: offset, to: date)!] = status
-//        }
-//        if let todayStatus { seed[date] = todayStatus }
-//
-//        return HomeViewModel(now: { date }, seed: seed, persistenceKey: nil)
-//    }
-//}
-
-private let fourLearned: [Int: DayStatus] = [-4: .learned, -3: .learned, -2: .learned, -1: .learned]
-
 #Preview("Default") {
-    HomeView()
+    ActivityView()
 }
-
-//#Preview("Default") {
-//    HomeView(viewModel: .mock(past: fourLearned, today: nil))
-//}
-//
-//#Preview("Learned today") {
-//    HomeView(viewModel: .mock(past: fourLearned, today: .learned))
-//}
-//
-//#Preview("Freezed today") {
-//    HomeView(viewModel: .mock(past: fourLearned, today: .frozen))
-//}
-//
-//#Preview("No freezes available") {
-//    HomeView(viewModel: .mock(
-//        past: [-4: .learned, -3: .learned, -2: .learned, -1: .frozen],
-//        today: .frozen
-//    ))
-//}

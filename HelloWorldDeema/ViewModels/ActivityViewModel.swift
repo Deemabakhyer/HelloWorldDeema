@@ -7,10 +7,8 @@
 
 import Foundation
 
-// MARK: - ViewModel
-
 @Observable
-final class HomeViewModel {
+final class ActivityViewModel {
 
     private(set) var today: Date
     private(set) var entries: [String: DayStatus]

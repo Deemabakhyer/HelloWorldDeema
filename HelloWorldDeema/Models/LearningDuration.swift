@@ -5,8 +5,6 @@
 //  Created by deema bakhyer on 10/11/2026.
 //
 
-// MARK: - Model
-
 enum LearningDuration: String, CaseIterable, Identifiable {
     case week = "Week"
     case month = "Month"
