@@ -1,5 +1,5 @@
 //
-//  Onboarding.swift
+//  OnboardingView.swift
 //  MyApp
 //
 //  Created by deema bakhyer on 09/11/2026.
