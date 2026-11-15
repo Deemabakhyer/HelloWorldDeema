@@ -12,6 +12,7 @@ import SwiftUI
 struct ActivityView: View {
     @State private var viewModel: ActivityViewModel
     @State private var showGoalEditor = false
+    @State private var showCalendar = false
     @Environment(\.scenePhase) private var scenePhase
 
     init(viewModel: ActivityViewModel = ActivityViewModel()) {
@@ -31,6 +32,9 @@ struct ActivityView: View {
                             viewModel.startNewGoal(subject: subject, targetDays: duration.days)
                         }
                     }
+                }
+                .navigationDestination(isPresented: $showCalendar) {
+                    CalendarView(viewModel: viewModel)
                 }
         }
     }
@@ -104,7 +108,7 @@ struct ActivityView: View {
             GlassEffectContainer(spacing: 10) {
                 HStack(spacing: 10) {
                     HeaderIconButton(systemName: "calendar", label: "Calendar") {
-                        // TODO: present the full calendar
+                        showCalendar = true
                     }
                     HeaderIconButton(systemName: "pencil.and.outline", label: "Edit goal") {
                         showGoalEditor = true

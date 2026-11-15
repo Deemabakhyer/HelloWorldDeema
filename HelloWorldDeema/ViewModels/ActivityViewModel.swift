@@ -117,6 +117,56 @@ final class ActivityViewModel {
     func isToday(_ date: Date) -> Bool { calendar.isDate(date, inSameDayAs: today) }
     func isFuture(_ date: Date) -> Bool { date > today }
 
+    // MARK: Calendar (full history)
+
+    /// Status of any day ever recorded, regardless of which goal it belonged to.
+    func recordedStatus(on date: Date) -> DayStatus? {
+        entries[Self.key(for: date, calendar: calendar)]
+    }
+
+    /// First day of the month that contains today.
+    var currentMonth: Date {
+        calendar.dateInterval(of: .month, for: today)!.start
+    }
+
+    /// Every month of every year in use: from January of the earliest year
+    /// (first recorded entry, or the current year) through December of the current year.
+    var calendarMonths: [Date] {
+        var earliest = today
+
+        if let earliestKey = entries.keys.min() {
+            let parts = earliestKey.split(separator: "-").compactMap { Int($0) }
+            if parts.count == 3,
+               let date = calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2])) {
+                earliest = min(earliest, date)
+            }
+        }
+
+        let startYear = calendar.component(.year, from: earliest)
+        let endYear = calendar.component(.year, from: today)
+
+        guard let first = calendar.date(from: DateComponents(year: startYear, month: 1, day: 1)),
+              let last = calendar.date(from: DateComponents(year: endYear, month: 12, day: 1))
+        else { return [currentMonth] }
+
+        var months: [Date] = []
+        var cursor = first
+        while cursor <= last {
+            months.append(cursor)
+            cursor = calendar.date(byAdding: .month, value: 1, to: cursor)!
+        }
+        return months
+    }
+
+    /// Days of a month laid out Sunday-first; leading `nil`s are the empty cells before the 1st.
+    func days(inMonth month: Date) -> [Date?] {
+        let range = calendar.range(of: .day, in: .month, for: month)!
+        let weekdayOfFirst = calendar.component(.weekday, from: month)       // 1 = Sunday
+        let leading = (weekdayOfFirst - calendar.firstWeekday + 7) % 7
+        let days: [Date?] = range.map { calendar.date(byAdding: .day, value: $0 - 1, to: month) }
+        return Array<Date?>(repeating: nil, count: leading) + days
+    }
+
     // MARK: Actions
 
     /// Marks today as learned. If today was frozen, the freeze is given back automatically

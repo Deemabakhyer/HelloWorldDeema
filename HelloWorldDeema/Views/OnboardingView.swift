@@ -14,6 +14,17 @@ struct OnboardingView: View {
     @State private var duration: LearningDuration = .week
     @FocusState private var isFocused: Bool
 
+    /// Called with the chosen subject and duration when "Start Learning" is pressed.
+    private let onStart: (String, LearningDuration) -> Void
+
+    init(onStart: @escaping (String, LearningDuration) -> Void = { _, _ in }) {
+        self.onStart = onStart
+    }
+
+    private var trimmedSubject: String {
+        subject.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     private var greeting: AttributedString {
         var hello = AttributedString("Hello ")
         hello.font = .system(size: 34, weight: .light)
@@ -100,7 +111,8 @@ struct OnboardingView: View {
                 // Bottom CTA
                 VStack(spacing: 14) {
                     Button {
-                        // Start learning action
+                        isFocused = false
+                        onStart(trimmedSubject, duration)
                     } label: {
                         Text("Start Learning")
                             .font(.system(size: 17, weight: .medium))
@@ -110,6 +122,7 @@ struct OnboardingView: View {
                     }
                     .buttonStyle(.glassProminent)
                     .tint(Color("Orange"))
+                    .disabled(trimmedSubject.isEmpty)
 
                     Text("You can edit your desire later")
                         .font(.system(size: 12))
