@@ -111,7 +111,7 @@ Shows the current month and every following month through December. Learned days
 | Goals | **SwiftData** (`GoalRecord`, newest = current goal) | Keeps every goal, not just the latest |
 | Onboarding completed flag | **`@AppStorage("hasCompletedOnboarding")`** | A single simple value |
 
-All screens share **one** `ActivityViewModel`, created in `MyAppApp` and passed down, so they always show the same data. The view model keeps an in-memory copy for fast, observable UI updates and writes every change through to SwiftData.
+All screens share **one** `ActivityViewModel`, created in `MyApp` and passed down, so they always show the same data. The view model keeps an in-memory copy for fast, observable UI updates and writes every change through to SwiftData.
 
 Data saved by earlier versions in `UserDefaults` (`activity.entries`, `activity.goal`) is migrated into SwiftData automatically on first launch and then removed.
 
@@ -134,10 +134,3 @@ Add these **Color Sets** to the asset catalog:
 |---|---|---|
 | `Orange` | Learned days, main buttons, accents | `#F58C21` |
 | `Cyan` | Frozen days, freeze button | `#64CAF2` |
-
-## Liquid Glass components used
-
-- `glassEffect(_:in:)` with `.regular`, `.tint(_:)` and `.interactive()`
-- `GlassEffectContainer`
-- `.buttonStyle(.glass)` and `.buttonStyle(.glassProminent)`
-- `Button(role: .confirm)` in the navigation bar toolbar
