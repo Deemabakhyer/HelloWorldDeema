@@ -22,24 +22,13 @@ The UI is built for **iOS 26** and uses native **Liquid Glass** components.
 | Xcode | 26 or later |
 | Deployment target | iOS 26 or later |
 | Language | Swift 6 / SwiftUI |
-| Dependencies | None |
+| Frameworks | SwiftUI, SwiftData (no third-party dependencies) |
 
 ## Getting started
 
 1. Open the project in Xcode 26.
 2. Make sure the asset catalog contains two **Color Sets**: `Orange` and `Cyan` (see [Assets](#assets)).
-3. Set `RootView` as the app's root:
-
-   ```swift
-   @main
-   struct MyAppApp: App {
-       var body: some Scene {
-           WindowGroup {
-               RootView()
-           }
-       }
-   }
-   ```
+3. Use `MyAppApp.swift` as the app entry point. It creates the SwiftData container and the shared `ActivityViewModel`, then shows `RootView`.
 4. Run on an iOS 26 simulator or device.
 
 Onboarding is shown only on first launch. To see it again, delete the app from the simulator or clear the `hasCompletedOnboarding` key.
@@ -50,7 +39,9 @@ Onboarding is shown only on first launch. To see it again, delete the app from t
 
 | File | Purpose |
 |---|---|
-| `RootView.swift` | Shows onboarding on first launch, then the Activity screen. Owns the shared `ActivityViewModel`. |
+| `MyAppApp.swift` | App entry point. Creates the SwiftData `ModelContainer` and the single shared `ActivityViewModel`. |
+| `RootView.swift` | Shows onboarding on first launch, then the Activity screen. |
+| `StorageModels.swift` | SwiftData models: `DayEntryRecord` (one per logged day) and `GoalRecord` (one per goal). |
 | `OnboardingView.swift` | Welcome screen. Also defines `LearningDuration` (Week / Month / Year). Calls `onStart(subject, duration)` when *Start Learning* is pressed. |
 | `ActivityView.swift` | Main screen: header, week strip, stat cards, log / freeze buttons, goal result view. Hosts the `NavigationStack`. |
 | `UpdateGoalView.swift` | Pushed page to change the learning goal, with the confirmation alert. |
@@ -114,10 +105,19 @@ Shows the current month and every following month through December. Learned days
 
 ### Persistence
 
-Data is stored in `UserDefaults`:
+| What | Stored with | Why |
+|---|---|---|
+| Logged / frozen days | **SwiftData** (`DayEntryRecord`, unique per `yyyy-MM-dd`) | A history that grows over time and is queried by date |
+| Goals | **SwiftData** (`GoalRecord`, newest = current goal) | Keeps every goal, not just the latest |
+| Onboarding completed flag | **`@AppStorage("hasCompletedOnboarding")`** | A single simple value |
 
-| Key | Content |
-|---|---|
+All screens share **one** `ActivityViewModel`, created in `MyAppApp` and passed down, so they always show the same data. The view model keeps an in-memory copy for fast, observable UI updates and writes every change through to SwiftData.
+
+Data saved by earlier versions in `UserDefaults` (`activity.entries`, `activity.goal`) is migrated into SwiftData automatically on first launch and then removed.
+
+`ActivityViewModel` takes an optional `context: ModelContext?`. Passing `nil` (previews, tests) keeps everything in memory; `seed`, `goal` and `now` allow fixed data.
+
+---|---|
 | `activity.entries` | JSON of all day entries |
 | `activity.goal` | JSON of the current goal |
 | `hasCompletedOnboarding` | `Bool`, set after onboarding |
