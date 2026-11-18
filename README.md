@@ -31,10 +31,10 @@ All screens use a black background with orange (learned) and cyan (freezed) acce
     <th align="center">Activity – freezed</th>
   </tr>
   <tr>
-    <td align="center"><img src="Screenshots/Onboarding.png" width="200" alt="Onboarding screen"></td>
-    <td align="center"><img src="Screenshots/Activity01.png" width="200" alt="Activity screen, today not logged"></td>
-    <td align="center"><img src="Screenshots/Activity03.png" width="200" alt="Activity screen, today logged as learned"></td>
-    <td align="center"><img src="Screenshots/Activity02.png" width="200" alt="Activity screen, today freezed"></td>
+    <td align="center"><img src="Screenshots/Onboarding.png" width="200" height="435" alt="Onboarding screen"></td>
+    <td align="center"><img src="Screenshots/Activity01.png" width="200" height="435" alt="Activity screen, today not logged"></td>
+    <td align="center"><img src="Screenshots/Activity03.png" width="200" height="435" alt="Activity screen, today logged as learned"></td>
+    <td align="center"><img src="Screenshots/Activity02.png" width="200" height="435" alt="Activity screen, today freezed"></td>
   </tr>
   <tr>
     <td valign="top">Choose what to learn and for how long, then tap <b>Start Learning</b>.</td>
@@ -53,9 +53,9 @@ All screens use a black background with orange (learned) and cyan (freezed) acce
     <th align="center">Calendar</th>
   </tr>
   <tr>
-    <td align="center"><img src="Screenshots/LearningGoal01.png" width="220" alt="Learning Goal page"></td>
-    <td align="center"><img src="Screenshots/LearningGoal02.png" width="220" alt="Update goal confirmation alert"></td>
-    <td align="center"><img src="Screenshots/Calendar.png" width="220" alt="Calendar of learned days"></td>
+    <td align="center"><img src="Screenshots/LearningGoal01.png" width="200" height="435" alt="Learning Goal page"></td>
+    <td align="center"><img src="Screenshots/LearningGoal02.png" width="200" height="435" alt="Update goal confirmation alert"></td>
+    <td align="center"><img src="Screenshots/Calendar.png" width="200" height="435" alt="Calendar of learned days"></td>
   </tr>
   <tr>
     <td valign="top">Change the subject or duration. The checkmark stays disabled until a subject is entered.</td>
