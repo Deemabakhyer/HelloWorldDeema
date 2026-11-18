@@ -11,6 +11,7 @@
     ],
   },
   "files": [
+    { "kind": "folder", "path": "Screenshots", "target-membership": [ "HelloWorldDeema" ] },
     { "path": "LJ_Icon.icon", "target-membership": [ "HelloWorldDeema/resources" ] },
     { "kind": "folder", "path": "HelloWorldDeema", "target-membership": [ "HelloWorldDeema" ] },
     {
