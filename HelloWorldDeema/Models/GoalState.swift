@@ -20,12 +20,12 @@ struct Goal: Codable, Equatable {
     var startDate: Date
     var targetDays: Int
 
-    /// Freezes allowed for this goal (week → 2, month → 6, year → 12).
+    /// Freezes allowed for this goal (week → 2, month → 8, year → 96).
     var maxFreezes: Int {
         switch targetDays {
         case ...7:  return 2
-        case ...31: return 6
-        default:    return 12
+        case ...31: return 8
+        default:    return 96
         }
     }
 }

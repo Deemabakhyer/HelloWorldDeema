@@ -61,6 +61,7 @@ struct ActivityView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { viewModel.refreshToday() }
         }
+//        .toolbar(.hidden, for: .navigationBar)
     }
 
     // MARK: Switchable content (in progress vs. goal result)
@@ -182,6 +183,7 @@ struct ActivityView: View {
 
     private var freezeSection: some View {
         let canFreeze = viewModel.canFreeze
+        let frozenToday = viewModel.todayStatus == .frozen
 
         return VStack(spacing: 14) {
             Button {
@@ -189,7 +191,7 @@ struct ActivityView: View {
                     viewModel.freezeToday()
                 }
             } label: {
-                Text("Freeze for a day")
+                Text(frozenToday ? "Freezed for a day" : "Freeze for a day")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(canFreeze ? .white : Color.white.opacity(0.3))
                     .frame(width: 272, height: 48)
