@@ -1,4 +1,4 @@
-# Learning Streak
+# Learning Journey
 
 A SwiftUI app that helps you build a daily learning habit. Pick something to learn and how long you want to take, then log each day as **learned**, or use a **freeze** when you can't. Finish every day of your goal to complete it; miss a day and the streak starts over.
 
@@ -15,6 +15,59 @@ The UI is built for **iOS 26** and uses native **Liquid Glass** components.
 - **Calendar** – a view-only, scrolling month-by-month calendar of learned and frozen days.
 - **Persistence** – progress and the current goal are saved on the device.
 
+---
+
+## UI
+
+All screens use a black background with orange (learned) and cyan (freezed) accents, and Liquid Glass buttons and cards.
+
+### Getting started and daily use
+
+<table>
+  <tr>
+    <th align="center">Onboarding</th>
+    <th align="center">Activity – default</th>
+    <th align="center">Activity – logged</th>
+    <th align="center">Activity – freezed</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/onboarding.png" width="200" alt="Onboarding screen"></td>
+    <td align="center"><img src="screenshots/activity-default.png" width="200" alt="Activity screen, today not logged"></td>
+    <td align="center"><img src="screenshots/activity-logged.png" width="200" alt="Activity screen, today logged as learned"></td>
+    <td align="center"><img src="screenshots/activity-freezed.png" width="200" alt="Activity screen, today freezed"></td>
+  </tr>
+  <tr>
+    <td valign="top">Choose what to learn and for how long, then tap <b>Start Learning</b>.</td>
+    <td valign="top">Today isn't logged yet: <b>Log as Learned</b> and <b>Freeze for a day</b> are both available.</td>
+    <td valign="top">Today is logged: the circle turns dark and is disabled, and the Learned counter goes up.</td>
+    <td valign="top">Today is freezed (blue). <b>Freeze for a day</b> is disabled and the freeze counter shows 1 out of 2 used.</td>
+  </tr>
+</table>
+
+### Goal and history
+
+<table>
+  <tr>
+    <th align="center">Learning Goal</th>
+    <th align="center">Update goal alert</th>
+    <th align="center">Calendar</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/learning-goal.png" width="220" alt="Learning Goal page"></td>
+    <td align="center"><img src="screenshots/update-goal-alert.png" width="220" alt="Update goal confirmation alert"></td>
+    <td align="center"><img src="screenshots/calendar.png" width="220" alt="Calendar of learned days"></td>
+  </tr>
+  <tr>
+    <td valign="top">Change the subject or duration. The checkmark stays disabled until a subject is entered.</td>
+    <td valign="top">Changing a goal in progress asks for confirmation: updating restarts the streak.</td>
+    <td valign="top">View-only calendar. Learned days are orange, freezed days are cyan, and months scroll vertically.</td>
+  </tr>
+</table>
+
+> The screenshots live in the `screenshots/` folder next to this README.
+
+---
+
 ## Requirements
 
 | | |
@@ -28,7 +81,7 @@ The UI is built for **iOS 26** and uses native **Liquid Glass** components.
 
 1. Open the project in Xcode 26.
 2. Make sure the asset catalog contains two **Color Sets**: `Orange` and `Cyan` (see [Assets](#assets)).
-3. Use `MyAppApp.swift` as the app entry point. It creates the SwiftData container and the shared `ActivityViewModel`, then shows `RootView`.
+3. Use `MyApp.swift` as the app entry point. It creates the SwiftData container and the shared `ActivityViewModel`, then shows `RootView`.
 4. Run on an iOS 26 simulator or device.
 
 Onboarding is shown only on first launch. To see it again, delete the app from the simulator or clear the `hasCompletedOnboarding` key.
@@ -39,15 +92,15 @@ Onboarding is shown only on first launch. To see it again, delete the app from t
 
 | File | Purpose |
 |---|---|
-| `MyAppApp.swift` | App entry point. Creates the SwiftData `ModelContainer` and the single shared `ActivityViewModel`. |
+| `MyApp.swift` | App entry point. Creates the SwiftData `ModelContainer` and the single shared `ActivityViewModel`. |
 | `RootView.swift` | Shows onboarding on first launch, then the Activity screen. |
 | `StorageModels.swift` | SwiftData models: `DayEntryRecord` (one per logged day) and `GoalRecord` (one per goal). |
-| `OnboardingView.swift` | Welcome screen. Also defines `LearningDuration` (Week / Month / Year). Calls `onStart(subject, duration)` when *Start Learning* is pressed. |
+| `OnboardingView.swift` | Welcome screen. Calls `onStart(subject, duration)` when *Start Learning* is pressed. |
 | `ActivityView.swift` | Main screen: header, week strip, stat cards, log / freeze buttons, goal result view. Hosts the `NavigationStack`. |
 | `UpdateGoalView.swift` | Pushed page to change the learning goal, with the confirmation alert. |
 | `CalendarView.swift` | View-only calendar of learned and frozen days. |
 | `ActivityViewModel.swift` | All app logic and state (`@Observable`). |
-| Model types | `DayStatus` (`learned`, `frozen`), `Goal`, `GoalState` (`active`, `completed`, `failed`), and a `LearningDuration` extension (`days`, `closest(toDays:)`). |
+| Model types | `DayStatus` (`learned`, `frozen`), `Goal`, `GoalState` (`active`, `completed`, `failed`), and `LearningDuration` (`days`, `closest(toDays:)`). |
 
 ### Navigation
 
@@ -79,8 +132,8 @@ Counters (Learned, Freezed, freezes used) are **derived** from the entries, so t
 | Duration | Goal length | Freezes allowed |
 |---|---|---|
 | Week | 7 days | 2 |
-| Month | 30 days | 6 |
-| Year | 365 days | 12 |
+| Month | 30 days | 8 |
+| Year | 365 days | 96 |
 
 - A goal is **completed** when every day from its start date is either *learned* or *frozen*.
 - A goal **fails** when a past day has no entry.
@@ -116,13 +169,6 @@ All screens share **one** `ActivityViewModel`, created in `MyApp` and passed dow
 Data saved by earlier versions in `UserDefaults` (`activity.entries`, `activity.goal`) is migrated into SwiftData automatically on first launch and then removed.
 
 `ActivityViewModel` takes an optional `context: ModelContext?`. Passing `nil` (previews, tests) keeps everything in memory; `seed`, `goal` and `now` allow fixed data.
-
----|---|
-| `activity.entries` | JSON of all day entries |
-| `activity.goal` | JSON of the current goal |
-| `hasCompletedOnboarding` | `Bool`, set after onboarding |
-
-`ActivityViewModel` accepts `persistenceKey: nil`, plus `seed`, `goal` and `now` parameters, so previews and tests can run with fixed data and no saving.
 
 ---
 
