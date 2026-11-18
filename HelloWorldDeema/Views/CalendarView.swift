@@ -136,7 +136,7 @@ private func previewViewModel() -> ActivityViewModel {
     }
 
     let goal = Goal(subject: "Swift", startDate: start, targetDays: 365)
-    return ActivityViewModel(now: { today }, seed: seed, goal: goal, persistenceKey: nil)
+    return ActivityViewModel(now: { today }, seed: seed, goal: goal)
 }
 
 #Preview {

@@ -118,11 +118,21 @@ struct UpdateGoalView: View {
                 .disabled(trimmedSubject.isEmpty)
             }
         }
-        .alert("Update goal", isPresented: $showUpdateAlert) {
-            Button("Dismiss", role: .cancel) { }
-            Button("Update") { apply() }
-        } message: {
-            Text("If you update now, your streak will start over.")
+        // Custom alert (the native one can't have a filled orange button / left-aligned text).
+        // Shown full screen over a dimmed background so it also dims the navigation bar.
+        .fullScreenCover(isPresented: $showUpdateAlert) {
+            UpdateGoalAlert(
+                onDismiss: { setAlert(false) },
+                onUpdate: {
+                    setAlert(false)
+                    // Wait for the alert to close, then apply and go back
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(150))
+                        apply()
+                    }
+                }
+            )
+            .presentationBackground(.black.opacity(0.6))
         }
         .tint(Color("Orange"))
         .preferredColorScheme(.dark)
@@ -139,7 +149,7 @@ struct UpdateGoalView: View {
         }
 
         if hasChanges {
-            showUpdateAlert = true      // goal in progress → warn first
+            setAlert(true)              // goal in progress → warn first
         } else {
             dismiss()                   // nothing changed → just go back
         }
@@ -149,6 +159,82 @@ struct UpdateGoalView: View {
         onUpdate(trimmedSubject, duration)
         dismiss()
     }
+
+    /// Presents / hides the alert without the full-screen cover's slide animation
+    /// (the card fades and scales in by itself instead).
+    private func setAlert(_ shown: Bool) {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            showUpdateAlert = shown
+        }
+    }
+}
+
+// MARK: - Alert card (matches the design: left-aligned text, Dismiss + orange Update)
+
+private struct UpdateGoalAlert: View {
+    let onDismiss: () -> Void
+    let onUpdate: () -> Void
+
+    @State private var appeared = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Update goal")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(.white)
+
+            Text("If you update now, your streak will start over.")
+                .font(.system(size: 15))
+                .foregroundStyle(.white.opacity(0.65))
+                .fixedSize(horizontal: false, vertical: true)
+
+            GlassEffectContainer(spacing: 12) {
+                HStack(spacing: 12) {
+                    // Dismiss: neutral glass
+                    Button(action: onDismiss) {
+                        Text("Dismiss")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 46)
+                            .contentShape(.capsule)
+                    }
+                    .buttonStyle(.plain)
+                    .glassEffect(.regular.tint(Color.white.opacity(0.12)).interactive(), in: .capsule)
+
+                    // Update: filled orange
+                    Button(action: onUpdate) {
+                        Text("Update")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 46)
+                            .contentShape(.capsule)
+                    }
+                    .buttonStyle(.plain)
+                    .glassEffect(.regular.tint(Color("Orange")).interactive(), in: .capsule)
+                }
+            }
+            .padding(.top, 14)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 20)
+        .padding(.bottom, 16)
+        .frame(maxWidth: 320, alignment: .leading)
+        .glassEffect(.regular, in: .rect(cornerRadius: 30))
+        .padding(.horizontal, 40)
+        .scaleEffect(appeared ? 1 : 0.92)
+        .opacity(appeared ? 1 : 0)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .preferredColorScheme(.dark)
+        .onAppear {
+            withAnimation(.spring(duration: 0.3, bounce: 0.2)) {
+                appeared = true
+            }
+        }
+    }
 }
 
 // MARK: - Preview
@@ -156,5 +242,12 @@ struct UpdateGoalView: View {
 #Preview {
     NavigationStack {
         UpdateGoalView(subject: "Swift", duration: .week) { _, _ in }
+    }
+}
+
+#Preview("Alert") {
+    ZStack {
+        Color.black.ignoresSafeArea()
+        UpdateGoalAlert(onDismiss: {}, onUpdate: {})
     }
 }

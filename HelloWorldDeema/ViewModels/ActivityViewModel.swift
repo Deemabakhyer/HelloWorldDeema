@@ -6,9 +6,14 @@
 //
 
 import Foundation
+import SwiftData
 
 // MARK: - ViewModel
 
+/// Single source of truth shared by every screen.
+/// Keeps an in-memory copy (`entries`, `goal`) for fast, observable UI updates and
+/// writes every change through to SwiftData.
+@MainActor
 @Observable
 final class ActivityViewModel {
 
@@ -18,17 +23,17 @@ final class ActivityViewModel {
 
     private let calendar: Calendar
     private let now: () -> Date
-    private let persistenceKey: String?
+    private let context: ModelContext?
 
     /// - Parameters:
-    ///   - seed: pre-filled days (previews/tests). When nil, data is loaded from UserDefaults.
-    ///   - goal: pre-set goal (previews/tests). When nil, it is loaded from UserDefaults.
-    ///   - persistenceKey: base key for saving ("<key>.entries" and "<key>.goal"). Pass nil to disable saving.
+    ///   - seed: pre-filled days (previews/tests). When nil, days are loaded from SwiftData.
+    ///   - goal: pre-set goal (previews/tests). When nil, the newest saved goal is loaded.
+    ///   - context: SwiftData context used to load and save. Pass nil to keep everything in memory.
     init(
         now: @escaping () -> Date = { .now },
         seed: [Date: DayStatus]? = nil,
         goal: Goal? = nil,
-        persistenceKey: String? = "activity"
+        context: ModelContext? = nil
     ) {
         var cal = Calendar.current
         cal.firstWeekday = 1                      // week starts on Sunday, like the design
@@ -37,35 +42,24 @@ final class ActivityViewModel {
         self.calendar = cal
         self.now = now
         self.today = startOfToday
-        self.persistenceKey = persistenceKey
+        self.context = context
 
-        let defaults = UserDefaults.standard
-        let decoder = JSONDecoder()
+        var loadedEntries: [String: DayStatus] = [:]
+        var loadedGoal: Goal?
 
-        // Entries
         if let seed {
-            self.entries = Dictionary(
+            loadedEntries = Dictionary(
                 seed.map { (Self.key(for: $0.key, calendar: cal), $0.value) },
                 uniquingKeysWith: { $1 }
             )
-        } else if let persistenceKey,
-                  let data = defaults.data(forKey: "\(persistenceKey).entries"),
-                  let saved = try? decoder.decode([String: DayStatus].self, from: data) {
-            self.entries = saved
-        } else {
-            self.entries = [:]
+        } else if let context {
+            Self.migrateLegacyDataIfNeeded(into: context)
+            loadedEntries = Self.fetchEntries(from: context)
+            loadedGoal = Self.fetchLatestGoal(from: context)
         }
 
-        // Goal
-        if let goal {
-            self.goal = goal
-        } else if let persistenceKey,
-                  let data = defaults.data(forKey: "\(persistenceKey).goal"),
-                  let saved = try? decoder.decode(Goal.self, from: data) {
-            self.goal = saved
-        } else {
-            self.goal = Goal(subject: "Swift", startDate: startOfToday, targetDays: 7)
-        }
+        self.entries = loadedEntries
+        self.goal = goal ?? loadedGoal ?? Goal(subject: "Swift", startDate: startOfToday, targetDays: 7)
     }
 
     // MARK: Derived state
@@ -183,10 +177,18 @@ final class ActivityViewModel {
 
     /// Starts a new goal today (use the same subject/duration to "set the same goal again").
     /// Today's old entry is cleared so the new goal starts with a fresh day.
+    /// Earlier goals stay in storage as history.
     func startNewGoal(subject: String, targetDays: Int) {
-        entries[Self.key(for: today, calendar: calendar)] = nil
-        goal = Goal(subject: subject, startDate: today, targetDays: targetDays)
-        save()
+        let todayKey = Self.key(for: today, calendar: calendar)
+        let newGoal = Goal(subject: subject, startDate: today, targetDays: targetDays)
+
+        entries[todayKey] = nil
+        goal = newGoal
+
+        guard let context else { return }
+        if let record = record(for: todayKey) { context.delete(record) }
+        context.insert(GoalRecord(goal: newGoal))
+        saveContext()
     }
 
     /// Call when the app returns to the foreground so a new day is picked up.
@@ -204,24 +206,87 @@ final class ActivityViewModel {
             .count
     }
 
+    /// Updates memory first (instant UI), then writes through to SwiftData.
     private func set(_ status: DayStatus, on date: Date) {
-        entries[Self.key(for: date, calendar: calendar)] = status
-        save()
-    }
+        let key = Self.key(for: date, calendar: calendar)
+        entries[key] = status
 
-    private func save() {
-        guard let persistenceKey else { return }
-        let defaults = UserDefaults.standard
-        if let data = try? JSONEncoder().encode(entries) {
-            defaults.set(data, forKey: "\(persistenceKey).entries")
+        guard let context else { return }
+        if let existing = record(for: key) {
+            existing.status = status
+        } else {
+            context.insert(DayEntryRecord(dayKey: key, status: status))
         }
-        if let data = try? JSONEncoder().encode(goal) {
-            defaults.set(data, forKey: "\(persistenceKey).goal")
-        }
+        saveContext()
     }
 
     private static func key(for date: Date, calendar: Calendar) -> String {
         let c = calendar.dateComponents([.year, .month, .day], from: date)
         return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
+    }
+
+    // MARK: SwiftData
+
+    private func record(for key: String) -> DayEntryRecord? {
+        guard let context else { return nil }
+        var descriptor = FetchDescriptor<DayEntryRecord>(
+            predicate: #Predicate { $0.dayKey == key }
+        )
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first
+    }
+
+    private func saveContext() {
+        do {
+            try context?.save()
+        } catch {
+            print("Failed to save activity data: \(error)")
+        }
+    }
+
+    private static func fetchEntries(from context: ModelContext) -> [String: DayStatus] {
+        let records = (try? context.fetch(FetchDescriptor<DayEntryRecord>())) ?? []
+        return Dictionary(records.map { ($0.dayKey, $0.status) }, uniquingKeysWith: { $1 })
+    }
+
+    /// The newest goal is the current one; older goals remain as history.
+    private static func fetchLatestGoal(from context: ModelContext) -> Goal? {
+        var descriptor = FetchDescriptor<GoalRecord>(
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? context.fetch(descriptor))?.first?.goal
+    }
+
+    // MARK: Legacy migration (UserDefaults → SwiftData)
+
+    /// Earlier versions saved days and the goal as JSON in UserDefaults.
+    /// If SwiftData is still empty, import that data once and remove the old keys.
+    private static func migrateLegacyDataIfNeeded(into context: ModelContext) {
+        let hasStoredData =
+            ((try? context.fetchCount(FetchDescriptor<DayEntryRecord>())) ?? 0) > 0 ||
+            ((try? context.fetchCount(FetchDescriptor<GoalRecord>())) ?? 0) > 0
+        guard !hasStoredData else { return }
+
+        let defaults = UserDefaults.standard
+        let decoder = JSONDecoder()
+        let entriesKey = "activity.entries"
+        let goalKey = "activity.goal"
+
+        if let data = defaults.data(forKey: entriesKey),
+           let saved = try? decoder.decode([String: DayStatus].self, from: data) {
+            for (key, status) in saved {
+                context.insert(DayEntryRecord(dayKey: key, status: status))
+            }
+        }
+
+        if let data = defaults.data(forKey: goalKey),
+           let saved = try? decoder.decode(Goal.self, from: data) {
+            context.insert(GoalRecord(goal: saved))
+        }
+
+        try? context.save()
+        defaults.removeObject(forKey: entriesKey)
+        defaults.removeObject(forKey: goalKey)
     }
 }

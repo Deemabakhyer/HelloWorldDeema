@@ -10,8 +10,9 @@ struct RootView: View {
     /// Remembered between launches so onboarding only appears once.
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
-    /// One shared view model: onboarding creates the goal, Activity displays it.
-    @State private var viewModel = ActivityViewModel()
+    /// One shared view model (created in the App, backed by SwiftData):
+    /// onboarding creates the goal, Activity and the other screens display it.
+    let viewModel: ActivityViewModel
 
     var body: some View {
         ZStack {
@@ -33,5 +34,5 @@ struct RootView: View {
 }
 
 #Preview {
-    RootView()
+    RootView(viewModel: ActivityViewModel())
 }

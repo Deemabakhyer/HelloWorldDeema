@@ -10,13 +10,15 @@ import SwiftUI
 // MARK: - Screen (iOS 26+, Liquid Glass)
 
 struct ActivityView: View {
-    @State private var viewModel: ActivityViewModel
+    /// The one shared view model (created in the App and passed down), so every screen
+    /// reads and writes the same data.
+    let viewModel: ActivityViewModel
     @State private var showGoalEditor = false
     @State private var showCalendar = false
     @Environment(\.scenePhase) private var scenePhase
 
-    init(viewModel: ActivityViewModel = ActivityViewModel()) {
-        _viewModel = State(initialValue: viewModel)
+    init(viewModel: ActivityViewModel) {
+        self.viewModel = viewModel
     }
 
     var body: some View {
@@ -59,7 +61,6 @@ struct ActivityView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { viewModel.refreshToday() }
         }
-//        .toolbar(.hidden, for: .navigationBar)
     }
 
     // MARK: Switchable content (in progress vs. goal result)
@@ -278,12 +279,12 @@ private extension ActivityViewModel {
             startDate: cal.date(byAdding: .day, value: -4, to: date)!,
             targetDays: targetDays
         )
-        return ActivityViewModel(now: { date }, seed: seed, goal: goal, persistenceKey: nil)
+        return ActivityViewModel(now: { date }, seed: seed, goal: goal)
     }
 }
 
 #Preview("Default") {
-    ActivityView()
+    ActivityView(viewModel: ActivityViewModel())
 }
 
 #Preview("Goal completed") {
